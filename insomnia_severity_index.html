@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Insomnia Severity Index (ISI)</title>
+<style>
+  :root {
+    --surface: #eef1f6;
+    --panel: #ffffff;
+    --ink: #1c2340;
+    --muted: #5a6382;
+    --rule: #d3d8e5;
+    --accent: #3b4cb8;
+    --accent-ink: #ffffff;
+    --band0: #cfe6d8;
+    --band1: #f1e2b3;
+    --band2: #f0c3a2;
+    --band3: #d99aa8;
+    --band-ink: #1c2340;
+    --focus: #3b4cb8;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --surface: #12162a;
+      --panel: #1b2140;
+      --ink: #e6e9f5;
+      --muted: #a2a9c6;
+      --rule: #2f3762;
+      --accent: #8c9bff;
+      --accent-ink: #12162a;
+      --band0: #2f5a44;
+      --band1: #6b5a24;
+      --band2: #7a4428;
+      --band3: #7a2f43;
+      --band-ink: #f2f3fa;
+      --focus: #b3bdff;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+  h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-weight: 500;
+    font-size: 2.25rem;
+    line-height: 1.15;
+    margin: 0 0 .5rem;
+    letter-spacing: -0.01em;
+  }
+  .lede { color: var(--muted); margin: 0 0 2rem; max-width: 38rem; }
+
+  .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem; }
+  .meta label { display: block; font-size: .875rem; color: var(--muted); margin-bottom: .25rem; }
+  .meta input {
+    width: 100%; padding: .6rem .7rem; font: inherit; color: var(--ink);
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 6px;
+  }
+
+  fieldset {
+    border: 0; margin: 0 0 1rem; padding: 1.25rem 1.25rem 1.1rem;
+    background: var(--panel); border-radius: 10px; border: 1px solid var(--rule);
+  }
+  legend { padding: 0; float: left; width: 100%; margin-bottom: .9rem; }
+  legend .qnum { color: var(--accent); font-weight: 600; margin-right: .35rem; }
+  .q-title { font-weight: 600; }
+  .sub { font-weight: 500; }
+  fieldset.missing { border-color: var(--band3); box-shadow: inset 4px 0 0 var(--band3); }
+  .group { margin-top: 1.5rem; margin-bottom: .6rem; font-family: "Iowan Old Style", Palatino, Georgia, serif; font-size: 1.15rem; }
+
+  .scale { clear: both; display: grid; grid-template-columns: repeat(5, 1fr); gap: .4rem; }
+  .opt { position: relative; }
+  .opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  .opt span {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+    gap: .15rem; min-height: 4.2rem; padding: .5rem .25rem;
+    border: 1px solid var(--rule); border-radius: 8px; cursor: pointer;
+    text-align: center; font-size: .8rem; color: var(--muted);
+    transition: background-color .12s, border-color .12s, color .12s;
+  }
+  .opt span b { font-size: 1.15rem; color: var(--ink); font-weight: 600; }
+  .opt input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .opt input:checked + span b { color: var(--accent-ink); }
+  .opt input:focus-visible + span { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .opt span:hover { border-color: var(--accent); }
+
+  /* Result panel */
+  .result {
+    position: sticky; bottom: 0; margin-top: 2rem;
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 12px;
+    padding: 1.1rem 1.25rem 1.25rem;
+    box-shadow: 0 -6px 24px rgba(20, 26, 60, .12);
+  }
+  .result-top { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+  .total {
+    font-family: "Iowan Old Style", Palatino, Georgia, serif;
+    font-size: 2.75rem; line-height: 1; font-variant-numeric: tabular-nums;
+  }
+  .total small { font-size: 1rem; color: var(--muted); font-family: system-ui, sans-serif; }
+  .band-label { font-weight: 600; font-size: 1.05rem; }
+  .progress { color: var(--muted); font-size: .875rem; }
+
+  .meter { display: grid; grid-template-columns: 8fr 7fr 7fr 7fr; gap: 3px; margin-top: 1rem; position: relative; }
+  .seg {
+    height: 2.1rem; border-radius: 4px; font-size: .72rem; color: var(--band-ink);
+    display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 0 .25rem; opacity: .45; transition: opacity .2s;
+  }
+  .seg.on { opacity: 1; font-weight: 600; }
+  .seg:nth-child(1) { background: var(--band0); }
+  .seg:nth-child(2) { background: var(--band1); }
+  .seg:nth-child(3) { background: var(--band2); }
+  .seg:nth-child(4) { background: var(--band3); }
+  .marker {
+    position: absolute; top: -6px; bottom: -6px; width: 3px; border-radius: 2px;
+    background: var(--ink); transform: translateX(-50%);
+    transition: left .25s ease;
+  }
+  .ticks { display: grid; grid-template-columns: 8fr 7fr 7fr 7fr; font-size: .72rem; color: var(--muted); margin-top: .3rem; }
+
+  .actions { display: flex; gap: .6rem; margin-top: 1rem; flex-wrap: wrap; }
+  button {
+    font: inherit; padding: .55rem 1rem; border-radius: 6px; cursor: pointer;
+    border: 1px solid var(--accent); background: transparent; color: var(--accent);
+  }
+  button.primary { background: var(--accent); color: var(--accent-ink); }
+  button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+  .notes { margin-top: 2.5rem; font-size: .85rem; color: var(--muted); }
+  .notes p { margin: 0 0 .7rem; max-width: 40rem; }
+  table.key { border-collapse: collapse; margin: .5rem 0 1rem; font-size: .85rem; }
+  table.key td { padding: .2rem 1rem .2rem 0; border-bottom: 1px solid var(--rule); }
+
+  @media (max-width: 540px) {
+    h1 { font-size: 1.8rem; }
+    .meta { grid-template-columns: 1fr; }
+    .opt span { font-size: .7rem; min-height: 4.6rem; }
+    .seg { font-size: .62rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+  @media print {
+    .result { position: static; box-shadow: none; }
+    .actions { display: none; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+<main class="wrap">
+  <h1>Insomnia Severity Index</h1>
+  <p class="lede">For each question, choose the number that best describes your sleep over the last two weeks. Your score updates as you answer.</p>
+
+  <div class="meta">
+    <div><label for="name">Name</label><input id="name" type="text" autocomplete="off"></div>
+    <div><label for="date">Date</label><input id="date" type="date"></div>
+  </div>
+
+  <form id="isi" onsubmit="return false">
+    <p class="group"><span style="color:var(--accent);font-weight:600">1.</span> Please rate the current (i.e., last 2 weeks) <strong>severity</strong> of your insomnia problem(s).</p>
+    <div id="items"></div>
+  </form>
+
+  <section class="result" aria-live="polite">
+    <div class="result-top">
+      <div class="total"><span id="total">0</span> <small>/ 28</small></div>
+      <div style="text-align:right">
+        <div class="band-label" id="band">Answer all 7 items to see your result</div>
+        <div class="progress" id="progress">0 of 7 items answered</div>
+      </div>
+    </div>
+    <div class="meter" aria-hidden="true">
+      <div class="seg">No clinically significant insomnia</div>
+      <div class="seg">Subthreshold insomnia</div>
+      <div class="seg">Clinical insomnia (moderate)</div>
+      <div class="seg">Clinical insomnia (severe)</div>
+      <div class="marker" id="marker" style="left:0%"></div>
+    </div>
+    <div class="ticks" aria-hidden="true"><span>0–7</span><span>8–14</span><span>15–21</span><span>22–28</span></div>
+    <div class="actions">
+      <button type="button" class="primary" onclick="window.print()">Print results</button>
+      <button type="button" id="reset">Clear answers</button>
+    </div>
+  </section>
+
+  <section class="notes">
+    <p><strong>Scoring.</strong> Add the scores for all seven items (1a + 1b + 1c + 2 + 3 + 4 + 5). Total score ranges from 0 to 28.</p>
+    <table class="key">
+      <tr><td>0–7</td><td>No clinically significant insomnia</td></tr>
+      <tr><td>8–14</td><td>Subthreshold insomnia</td></tr>
+      <tr><td>15–21</td><td>Clinical insomnia (moderate severity)</td></tr>
+      <tr><td>22–28</td><td>Clinical insomnia (severe)</td></tr>
+    </table>
+    <p>The developers note that these cutoff scores have not been validated; treat them as interpretation guidelines. This is a screening tool, not a diagnosis.</p>
+    <p>Source: Bastien, C. H., Vallières, A., &amp; Morin, C. M. (2001). Validation of the Insomnia Severity Index as an outcome measure for insomnia research. <em>Sleep Medicine, 2</em>, 297–307. As reprinted in Shahid et al. (eds.), <em>STOP, THAT and One Hundred Other Sleep Scales</em>, Springer, 2012.</p>
+  </section>
+</main>
+
+<script>
+  const items = [
+    { id: "1a", sub: true, text: "Difficulty falling asleep",
+      labels: ["None", "Mild", "Moderate", "Severe", "Very severe"] },
+    { id: "1b", sub: true, text: "Difficulty staying asleep",
+      labels: ["None", "Mild", "Moderate", "Severe", "Very severe"] },
+    { id: "1c", sub: true, text: "Problem waking up too early",
+      labels: ["None", "Mild", "Moderate", "Severe", "Very severe"] },
+    { id: "2", html: "How <strong>satisfied</strong>/dissatisfied are you with your current sleep pattern?",
+      labels: ["Very satisfied", "", "", "", "Very dissatisfied"] },
+    { id: "3", html: "To what extent do you consider your sleep problem to <strong>interfere</strong> with your daily functioning (e.g. daytime fatigue, ability to function at work/daily chores, concentration, memory, mood, etc.)?",
+      labels: ["Not at all interfering", "A little", "Somewhat", "Much", "Very much interfering"] },
+    { id: "4", html: "How <strong>noticeable</strong> to others do you think your sleeping problem is in terms of impairing the quality of your life?",
+      labels: ["Not at all noticeable", "Barely", "Somewhat", "Much", "Very much noticeable"] },
+    { id: "5", html: "How <strong>worried</strong>/distressed are you about your current sleep problem?",
+      labels: ["Not at all", "A little", "Somewhat", "Much", "Very much"] }
+  ];
+
+  const bands = [
+    { max: 7,  label: "No clinically significant insomnia" },
+    { max: 14, label: "Subthreshold insomnia" },
+    { max: 21, label: "Clinical insomnia (moderate severity)" },
+    { max: 28, label: "Clinical insomnia (severe)" }
+  ];
+
+  const container = document.getElementById("items");
+  items.forEach(item => {
+    const fs = document.createElement("fieldset");
+    fs.id = "fs-" + item.id;
+    const legend = document.createElement("legend");
+    legend.innerHTML = item.sub
+      ? `<span class="qnum">${item.id.slice(1)}.</span><span class="sub">${item.text}</span>`
+      : `<span class="qnum">${item.id}.</span><span class="q-title" style="font-weight:400">${item.html}</span>`;
+    fs.appendChild(legend);
+    const scale = document.createElement("div");
+    scale.className = "scale";
+    for (let v = 0; v <= 4; v++) {
+      const lab = document.createElement("label");
+      lab.className = "opt";
+      lab.innerHTML = `<input type="radio" name="q${item.id}" value="${v}"><span><b>${v}</b>${item.labels[v]}</span>`;
+      scale.appendChild(lab);
+    }
+    fs.appendChild(scale);
+    container.appendChild(fs);
+
+    // Insert section heading break after item 1c
+  });
+
+  const form = document.getElementById("isi");
+  const totalEl = document.getElementById("total");
+  const bandEl = document.getElementById("band");
+  const progEl = document.getElementById("progress");
+  const marker = document.getElementById("marker");
+  const segs = document.querySelectorAll(".seg");
+
+  function update() {
+    let total = 0, answered = 0;
+    items.forEach(item => {
+      const sel = form.querySelector(`input[name="q${item.id}"]:checked`);
+      const fs = document.getElementById("fs-" + item.id);
+      if (sel) { total += Number(sel.value); answered++; fs.classList.remove("missing"); }
+    });
+    totalEl.textContent = total;
+    progEl.textContent = `${answered} of ${items.length} items answered`;
+    marker.style.left = (total / 28 * 100) + "%";
+
+    const idx = bands.findIndex(b => total <= b.max);
+    segs.forEach((s, i) => s.classList.toggle("on", answered === items.length && i === idx));
+    if (answered === items.length) {
+      bandEl.textContent = bands[idx].label;
+    } else {
+      bandEl.textContent = answered === 0
+        ? "Answer all 7 items to see your result"
+        : `Running total — ${items.length - answered} item${items.length - answered === 1 ? "" : "s"} left`;
+    }
+  }
+
+  form.addEventListener("change", update);
+
+  document.getElementById("reset").addEventListener("click", () => {
+    form.reset();
+    document.querySelectorAll("fieldset").forEach(f => f.classList.remove("missing"));
+    update();
+  });
+
+  // Flag unanswered items before printing
+  window.addEventListener("beforeprint", () => {
+    items.forEach(item => {
+      const sel = form.querySelector(`input[name="q${item.id}"]:checked`);
+      document.getElementById("fs-" + item.id).classList.toggle("missing", !sel);
+    });
+  });
+
+  document.getElementById("date").valueAsDate = new Date();
+  update();
+</script>
+</body>
+</html>

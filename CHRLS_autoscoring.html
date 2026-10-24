@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cambridge-Hopkins RLS Questionnaire – auto-scoring</title>
+<style>
+:root{
+  --paper:#EDF1F0; --sheet:#FFFFFF; --ink:#1E2A30; --muted:#5B6970; --rule:#CBD5D3;
+  --accent:#1F5F6B; --accent-soft:#DCEBEC;
+  --definite:#8A2E3B; --definite-soft:#F4E1E3;
+  --probable:#9A6812; --probable-soft:#F6EBD3;
+  --unlikely:#3F6B4A; --unlikely-soft:#E0EDE2;
+  --pending:#6B767C; --pending-soft:#E7ECEC;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:"Avenir Next","Segoe UI","Helvetica Neue",Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme:dark;
+    --paper:#141B1E; --sheet:#1C2529; --ink:#E3EAEA; --muted:#9AA8AC; --rule:#33424A;
+    --accent:#6FB4BF; --accent-soft:#1F3B40;
+    --definite:#E58A96; --definite-soft:#3D2227;
+    --probable:#E2B45C; --probable-soft:#3A2F18;
+    --unlikely:#8CC79A; --unlikely-soft:#1F3426;
+    --pending:#A3AFB3; --pending-soft:#263136;
+  }
+}
+*{box-sizing:border-box}
+html{background:var(--paper);color:var(--ink)}
+body{margin:0;font-family:var(--sans);font-size:16px;line-height:1.5}
+.wrap{max-width:1120px;margin:0 auto;padding:40px 24px 64px}
+header{max-width:640px;margin-bottom:32px}
+h1{font-family:var(--serif);font-weight:600;font-size:2.1rem;line-height:1.15;margin:0 0 10px;letter-spacing:-.01em}
+header p{margin:0;color:var(--muted);max-width:60ch}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:40px;align-items:start}
+form{margin:0}
+.q{display:grid;grid-template-columns:3.2rem minmax(0,1fr);gap:0 14px;padding:22px 0;border-top:1px solid var(--rule);transition:opacity .2s}
+.q:last-child{border-bottom:1px solid var(--rule)}
+.num{font-family:var(--serif);font-size:1.5rem;line-height:1.2;color:var(--accent);font-variant-numeric:oldstyle-nums}
+.qtext{font-family:var(--serif);font-size:1.12rem;line-height:1.55;margin:0 0 12px;max-width:62ch}
+.qnote{font-size:.85rem;color:var(--muted);margin:-4px 0 12px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;border:0;padding:0;margin:0}
+.opts legend{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.opt{position:relative}
+.opt input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.opt span{display:inline-block;padding:7px 14px;border:1px solid var(--rule);border-radius:6px;background:var(--sheet);font-size:.95rem;cursor:pointer;user-select:none}
+.opt input:hover + span{border-color:var(--accent)}
+.opt input:checked + span{background:var(--accent);border-color:var(--accent);color:var(--sheet)}
+.opt input:focus-visible + span{outline:3px solid var(--accent);outline-offset:2px}
+.opt input:disabled + span{cursor:not-allowed}
+.age{display:flex;align-items:center;gap:10px}
+.age input{width:7rem;padding:7px 10px;font:inherit;border:1px solid var(--rule);border-radius:6px;background:var(--sheet);color:var(--ink)}
+.age input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.q.skipped{opacity:.38}
+.q.skipped .qnote.skipmsg{display:block}
+.skipmsg{display:none}
+.warn{font-size:.85rem;color:var(--definite);margin:10px 0 0}
+aside{position:sticky;top:24px}
+.panel{background:var(--sheet);border:1px solid var(--rule);border-radius:10px;overflow:hidden}
+.verdict{padding:22px 22px 18px;background:var(--pending-soft);border-bottom:1px solid var(--rule);transition:background .25s}
+.verdict .lab{font-size:.85rem;color:var(--muted);margin:0 0 4px}
+.verdict .cls{font-family:var(--serif);font-size:2rem;line-height:1.1;font-weight:600;margin:0;color:var(--pending)}
+.verdict .why{margin:8px 0 0;font-size:.9rem}
+.panel[data-r="definite"] .verdict{background:var(--definite-soft)} .panel[data-r="definite"] .cls{color:var(--definite)}
+.panel[data-r="probable"] .verdict{background:var(--probable-soft)} .panel[data-r="probable"] .cls{color:var(--probable)}
+.panel[data-r="unlikely"] .verdict{background:var(--unlikely-soft)} .panel[data-r="unlikely"] .cls{color:var(--unlikely)}
+.crit{list-style:none;margin:0;padding:10px 22px 14px}
+.crit li{display:grid;grid-template-columns:2.2rem 1fr auto;gap:8px;padding:6px 0;font-size:.88rem;border-bottom:1px dashed var(--rule);align-items:baseline}
+.crit li:last-child{border-bottom:0}
+.crit .n{font-family:var(--serif);color:var(--muted)}
+.crit .s{font-size:.78rem;padding:1px 8px;border-radius:20px;white-space:nowrap}
+.s.met{background:var(--unlikely-soft);color:var(--unlikely)}
+.s.part{background:var(--probable-soft);color:var(--probable)}
+.s.fail{background:var(--definite-soft);color:var(--definite)}
+.s.pend{background:var(--pending-soft);color:var(--pending)}
+.extra{padding:12px 22px;border-top:1px solid var(--rule);font-size:.88rem}
+.extra h2,.rules h2{font-size:.88rem;font-weight:600;margin:0 0 6px}
+.extra dl{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:0}
+.extra dt{color:var(--muted)} .extra dd{margin:0}
+.actions{display:flex;gap:8px;padding:14px 22px 18px;border-top:1px solid var(--rule)}
+button{font:inherit;font-size:.9rem;padding:8px 14px;border-radius:6px;border:1px solid var(--accent);background:var(--sheet);color:var(--accent);cursor:pointer}
+button.primary{background:var(--accent);color:var(--sheet)}
+button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rules{margin-top:18px;font-size:.84rem;color:var(--muted)}
+.rules p{margin:0 0 8px}
+@media (max-width:900px){
+  .grid{grid-template-columns:1fr}
+  aside{position:static}
+}
+@media (max-width:520px){
+  .wrap{padding:28px 16px 48px}
+  h1{font-size:1.7rem}
+  .q{grid-template-columns:2.4rem minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  html,body{background:#fff;color:#000}
+  .grid{grid-template-columns:1fr 280px;gap:20px}
+  .actions,.rules{display:none}
+  aside{position:static}
+  .q{padding:10px 0;break-inside:avoid}
+  .opt span{padding:3px 8px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Cambridge-Hopkins Restless Legs Questionnaire</h1>
+    <p>Choose one answer for each question. The classification on the right updates as you go. Questions 11 to 13 are recorded but do not affect the result.</p>
+  </header>
+  <div class="grid">
+    <form id="f" autocomplete="off" onsubmit="return false"></form>
+    <aside>
+      <div class="panel" id="panel" data-r="pending" aria-live="polite">
+        <div class="verdict">
+          <p class="lab">Classification</p>
+          <p class="cls" id="cls">Not yet scored</p>
+          <p class="why" id="why">Answer questions 1 to 10 to see a result.</p>
+        </div>
+        <ul class="crit" id="crit"></ul>
+        <div class="extra">
+          <h2>Recorded, not scored</h2>
+          <dl id="extra"></dl>
+        </div>
+        <div class="actions">
+          <button type="button" class="primary" onclick="window.print()">Print</button>
+          <button type="button" id="clear">Clear responses</button>
+        </div>
+      </div>
+      <div class="rules">
+        <h2>How the result is decided</h2>
+        <p><strong>Definite RLS:</strong> 1 yes; 2 yes; 3 resting; 4 yes; 5 yes; 6 not about equal and not morning; 7 not about equal, evening or night; 8 does not usually relieve or don't know; 9a no or 9b no; 10 only when lying down or both sitting and lying.</p>
+        <p><strong>Probable RLS:</strong> the same items, except either 10 is only when sitting, or one of questions 1 and 2 is yes and the other is no (with 10 only lying or both).</p>
+        <p><strong>Unlikely RLS:</strong> neither pattern is met.</p>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+const QS = [{"id": "RLS_01", "text": "Do you have, or have you had, recurrent uncomfortable feelings or sensations in your legs while you are sitting or lying down?", "opts": [["Yes", 1], ["No", 0], ["Don't Know", "DK"]]}, {"id": "RLS_02", "text": "Do you, or have you had, a recurrent need or urge to move your legs while you were sitting or lying down?", "opts": [["Yes", 1], ["No", 0], ["Don't Know", "DK"]]}, {"id": "RLS_2A", "text": "Did you answer <b>YES</b> to either question 1 or 2 above?", "opts": [["No", 0], ["Yes", 1], ["Don't Know", "DK"]], "jump": ["[RLS_2A]=0", "END"]}, {"id": "RLS_03", "text": "Are you more likely to have these feelings when you are resting (either sitting or lying down) or when you are physically active?", "opts": [["Resting", 1], ["Active", 2], ["Don't Know", "DK"]]}, {"id": "RLS_04", "text": "Do these feelings usually <i>start</i> when you are resting (either sitting or lying down)?", "opts": [["Yes", 1], ["No", 0], ["Don't Know", "DK"]]}, {"id": "RLS_05", "text": "If you get up or move around when you have these feelings do these feelings get any better while you actually keep moving?", "opts": [["Yes", 1], ["No", 0], ["Don't Know", "DK"]]}, {"id": "RLS_06", "text": "Which times of day are these feelings in your legs <u>most</u> likely to occur?", "opts": [["Morning", 1], ["Mid-day", 2], ["Afternoon", 3], ["Evening", 4], ["Night", 5], ["About equal at all times", 6], ["Don't Know", "DK"]]}, {"id": "RLS_07", "text": "Which times of day are these feelings in your legs <u>least</u> likely to occur?", "opts": [["Morning", 1], ["Mid-day", 2], ["Afternoon", 3], ["Evening", 4], ["Night", 5], ["About equal at all times", 6], ["Don't Know", "DK"]]}, {"id": "RLS_08", "text": "Will simply changing leg position by itself <i>once</i> without continuing to move usually relieve these feelings?", "opts": [["Usually relieves", 1], ["Does not usually relieve", 2], ["Don't Know", "DK"]]}, {"id": "RLS_9", "text": "Are these feelings <i>ever</i> due to muscle cramps?", "opts": [["Yes", 1], ["No", 0], ["Don't Know", "DK"]], "jump": ["[RLS_9]=0", "RLS_10"]}, {"id": "RLS_9b", "text": "If so, are they <i>always</i> due to muscle cramps?", "opts": [["Yes", 1], ["No", 0], ["Don't Know", "DK"]]}, {"id": "RLS_10", "text": "Do these feelings occur <i>only</i> when sitting or only when lying down?", "opts": [["Neither", 1], ["Only when sitting", 2], ["Only when lying down", 3], ["Both when sitting and when lying down", 4], ["Don't Know", "DK"]]}, {"id": "RLS_11", "text": "When you actually experience the feelings in your legs, how <i>distressing</i> are they?", "opts": [["Not at all distressing", 0], ["A little bit", 1], ["Moderately", 2], ["Extremely distressing", 3], ["Don't Know", "DK"]]}, {"id": "RLS_12", "text": "In the past 12 months, how often did you experience these feelings in your legs?", "opts": [["Every day", 6], ["4-5 days per wk", 5], ["2-3 days per wk", 4], ["1 day per wk", 3], ["2 days per month", 2], ["1 day per month or less", 1], ["Never", 0], ["Don't Know", "DK"]]}, {"id": "RLS_13", "text": "Approximately how old were you when you first noticed these feelings in your legs?", "opts": []}];
+const LABEL = {RLS_01:"1",RLS_02:"2",RLS_2A:"2A",RLS_03:"3",RLS_04:"4",RLS_05:"5",RLS_06:"6",RLS_07:"7",RLS_08:"8",RLS_9:"9a",RLS_9b:"9b",RLS_10:"10",RLS_11:"11",RLS_12:"12",RLS_13:"13"};
+const form = document.getElementById('f');
+const A = {}; // answers: id -> number | "DK" | undefined
+
+// ---- Build the form ----
+QS.forEach(q=>{
+  const sec = document.createElement('section');
+  sec.className='q'; sec.id='q-'+q.id;
+  const n = document.createElement('div'); n.className='num'; n.textContent=LABEL[q.id];
+  const body = document.createElement('div');
+  const t = document.createElement('p'); t.className='qtext'; t.id='t-'+q.id; t.innerHTML=q.text;
+  body.appendChild(t);
+  const skip = document.createElement('p'); skip.className='qnote skipmsg';
+  skip.textContent = q.id==='RLS_9b' ? 'Skipped because 9a was answered No.' : 'Skipped because 2A was answered No.';
+  body.appendChild(skip);
+  if(q.opts.length){
+    const fs=document.createElement('fieldset'); fs.className='opts';
+    fs.setAttribute('aria-labelledby','t-'+q.id);
+    q.opts.forEach(([lab,val],i)=>{
+      const l=document.createElement('label'); l.className='opt';
+      const inp=document.createElement('input'); inp.type='radio'; inp.name=q.id; inp.value=String(val);
+      inp.addEventListener('change',()=>{A[q.id]= val==='DK'?'DK':Number(val); update();});
+      const s=document.createElement('span'); s.textContent=lab;
+      l.append(inp,s); fs.appendChild(l);
+    });
+    body.appendChild(fs);
+  } else {
+    const w=document.createElement('div'); w.className='age';
+    const inp=document.createElement('input'); inp.type='number'; inp.min='0'; inp.max='120'; inp.inputMode='numeric';
+    inp.name=q.id; inp.setAttribute('aria-labelledby','t-'+q.id);
+    inp.addEventListener('input',()=>{A[q.id]= inp.value===''?undefined:Number(inp.value); update();});
+    const u=document.createElement('span'); u.textContent='years old';
+    w.append(inp,u); body.appendChild(w);
+  }
+  if(q.id==='RLS_2A'){const w=document.createElement('p'); w.className='warn'; w.id='warn2a'; w.hidden=true; body.appendChild(w);}
+  sec.append(n,body); form.appendChild(sec);
+});
+
+// ---- Skip logic (from the Jump Formula column) ----
+const AFTER_2A = QS.slice(QS.findIndex(q=>q.id==='RLS_2A')+1).map(q=>q.id);
+function skipped(id){
+  if(A.RLS_2A===0 && AFTER_2A.includes(id)) return true;   // [RLS_2A]=0 -> END
+  if(id==='RLS_9b' && A.RLS_9===0) return true;             // [RLS_9]=0 -> RLS_10
+  return false;
+}
+const val = id => skipped(id) ? undefined : A[id];
+
+// ---- Criterion tests: true = met, false = not met, null = not answered yet ----
+function test(id, ok){
+  if(skipped(id)) return false;
+  const v=A[id]; if(v===undefined) return null;
+  return ok(v);
+}
+function crit9(){
+  if(A.RLS_2A===0) return false;
+  if(A.RLS_9===0) return true;              // 9a no
+  if(A.RLS_9===undefined) return null;
+  if(A.RLS_9b===0) return true;             // 9b no
+  if(A.RLS_9b===undefined) return null;
+  return false;
+}
+function all(list){ if(list.includes(false)) return false; if(list.every(x=>x===true)) return true; return null; }
+
+function score(){
+  const c = {
+    q1y: test('RLS_01',v=>v===1),
+    q1n: test('RLS_01',v=>v===0),
+    q2:  test('RLS_02',v=>v===1),
+    q2n: test('RLS_02',v=>v===0),
+    q3:  test('RLS_03',v=>v===1),
+    q4:  test('RLS_04',v=>v===1),
+    q5:  test('RLS_05',v=>v===1),
+    q6:  test('RLS_06',v=>[2,3,4,5].includes(v)),
+    q7:  test('RLS_07',v=>[1,2,3].includes(v)),
+    q8:  test('RLS_08',v=>v===2||v==='DK'),
+    q9:  crit9(),
+    q10lie: test('RLS_10',v=>v===3||v===4),
+    q10sit: test('RLS_10',v=>v===2),
+  };
+  const core=[c.q3,c.q4,c.q5,c.q6,c.q7,c.q8,c.q9];
+  // Exactly one of questions 1 and 2 is Yes and the other is No
+  const oneOf = (()=>{const a=all([c.q1n,c.q2]), b=all([c.q1y,c.q2n]);
+    return (a===true||b===true)?true:(a===false&&b===false)?false:null;})();
+  const definite = all([c.q1y,c.q2,...core,c.q10lie]);
+  const prob1    = all([c.q1y,c.q2,...core,c.q10sit]);
+  const prob2    = all([oneOf,...core,c.q10lie]);
+  let result;
+  if(definite===true) result='definite';
+  else if(prob1===true||prob2===true) result='probable';
+  else if(definite===false&&prob1===false&&prob2===false) result='unlikely';
+  else result='pending';
+  return {c,result,prob1,prob2};
+}
+
+// ---- Render ----
+const CRIT_ROWS = [
+  ['1','Sensations in legs','RLS_01'],['2','Urge to move legs','RLS_02'],['3','Worse at rest','RLS_03'],
+  ['4','Starts at rest','RLS_04'],['5','Relieved by movement','RLS_05'],['6','Most likely time','RLS_06'],
+  ['7','Least likely time','RLS_07'],['8','Position change alone','RLS_08'],['9','Not due to cramps','RLS_9'],
+  ['10','Sitting or lying','RLS_10']
+];
+function chip(state){
+  return {true:['met','Meets'], false:['fail','Does not meet'], null:['pend','Unanswered'], part:['part','Probable only']}[String(state)];
+}
+function update(){
+  QS.forEach(q=>{
+    const sk=skipped(q.id), sec=document.getElementById('q-'+q.id);
+    sec.classList.toggle('skipped',sk);
+    sec.querySelectorAll('input').forEach(i=>i.disabled=sk);
+  });
+  const w=document.getElementById('warn2a');
+  const either = A.RLS_01===1||A.RLS_02===1, neither = A.RLS_01!==undefined&&A.RLS_02!==undefined&&!either;
+  if(A.RLS_2A===0&&either){w.hidden=false;w.textContent='Check this answer: question 1 or 2 was answered Yes.';}
+  else if(A.RLS_2A===1&&neither){w.hidden=false;w.textContent='Check this answer: neither question 1 nor 2 was answered Yes.';}
+  else w.hidden=true;
+
+  const {c,result} = score();
+  const rows = CRIT_ROWS.map(([n,lab,id])=>{
+    let st;
+    if(id==='RLS_01'||id==='RLS_02'){
+      const [y,n,oy,on] = id==='RLS_01'?[c.q1y,c.q1n,c.q2,c.q2n]:[c.q2,c.q2n,c.q1y,c.q1n];
+      st = y===true ? true : (n===true ? (on===true ? false : 'part') : y);
+    }
+    else if(id==='RLS_10') st = c.q10lie===true?true : c.q10sit===true?'part' : c.q10lie;
+    else st = {RLS_03:c.q3,RLS_04:c.q4,RLS_05:c.q5,RLS_06:c.q6,RLS_07:c.q7,RLS_08:c.q8,RLS_9:c.q9}[id];
+    if(st===false && skipped(id)) st=false;
+    const [cls,txt]=chip(st);
+    return `<li><span class="n">${n}</span><span>${lab}</span><span class="s ${cls}">${txt}</span></li>`;
+  });
+  document.getElementById('crit').innerHTML=rows.join('');
+
+  const panel=document.getElementById('panel'); panel.dataset.r=result;
+  const T={
+    definite:['Definite RLS','Responses match the clinically typical pattern.'],
+    probable:['Probable RLS', c.q10sit===true?'All criteria met, but symptoms occur only when sitting.':'All criteria met, but only one of questions 1 and 2 was answered Yes.'],
+    unlikely:['Unlikely RLS','Responses do not meet the definite or probable pattern.'],
+    pending:['Not yet scored','Answer the unanswered items below to see a result.']
+  }[result];
+  document.getElementById('cls').textContent=T[0];
+  document.getElementById('why').textContent=T[1];
+
+  const lbl=(id)=>{const q=QS.find(x=>x.id===id); const v=val(id); if(v===undefined) return '—';
+    if(!q.opts.length) return v+' years'; const o=q.opts.find(o=>String(o[1])===String(v)); return o?o[0]:'—';};
+  document.getElementById('extra').innerHTML=
+    `<dt>11 Distress</dt><dd>${lbl('RLS_11')}</dd><dt>12 Frequency</dt><dd>${lbl('RLS_12')}</dd><dt>13 Age at onset</dt><dd>${lbl('RLS_13')}</dd>`;
+}
+document.getElementById('clear').addEventListener('click',()=>{
+  Object.keys(A).forEach(k=>delete A[k]); form.reset(); update(); window.scrollTo({top:0});
+});
+update();
+</script>
+</body>
+</html>
